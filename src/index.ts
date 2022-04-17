@@ -1,9 +1,7 @@
 import axios from "axios";
 import express from "express";
 import session from "express-session";
-import { callback, domain, Oauth2 } from "./config";
-
-const secret = "verySecret";
+import { callback, client, domain, Oauth2, secret } from "./config";
 
 const app = express();
 app.use(
@@ -40,8 +38,8 @@ app.get("/callback", async (req, reply) => {
     const data = await axios.post(
       "https://discord.com/api/v10/oauth2/token",
       new URLSearchParams({
-        client_id: "965211726817660978",
-        client_secret: "kGQQNKRNvGwMcLzEj19Pe-rxL9ulHG7L",
+        client_id: client.id,
+        client_secret: client.secret,
         grant_type: "authorization_code",
         code,
         redirect_uri: callback,
