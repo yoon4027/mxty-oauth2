@@ -52,7 +52,7 @@ app.get("/callback", async (req, reply) => {
     );
 
     (req.session as any).token = data.data.access_token;
-    return reply.status(200).redirect("${domain}/info");
+    return reply.status(200).redirect(`${domain}/info`);
   } catch (e) {
     reply.status(404);
     console.error(e);
