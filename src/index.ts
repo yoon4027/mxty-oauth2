@@ -22,7 +22,7 @@ app.use(
 
 app.get("/login", async (_, reply) => {
   return reply.redirect(
-    "https://discord.com/api/oauth2/authorize?client_id=965211726817660978&redirect_uri=http%3A%2F%2Flocalhost%3A9012%2Fcallback&response_type=code&scope=identify"
+    "https://discord.com/api/oauth2/authorize?client_id=965211726817660978&redirect_uri=https%3A%2F%2Fmxty.mirodash.xyz%2Fcallback&response_type=code&scope=identify"
   );
 });
 
@@ -44,7 +44,7 @@ app.get("/callback", async (req, reply) => {
         client_secret: "kGQQNKRNvGwMcLzEj19Pe-rxL9ulHG7L",
         grant_type: "authorization_code",
         code,
-        redirect_uri: "http://localhost:9012/callback",
+        redirect_uri: "https://mxty.mirodash.xyz/callback",
       }),
       {
         headers: {
