@@ -1,38 +1,37 @@
 import axios from "axios";
-import express from "express";
-import session from "express-session";
+import fastify, { FastifyRequest } from "fastify";
+import fastifyCookie from "fastify-cookie";
 import { callback, client, domain, Oauth2, secret } from "./config";
 
-const app = express();
-app.use(
-  session({
-    secret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: "auto",
-      sameSite: false,
-      httpOnly: false,
-      maxAge: 6048e5,
-    },
-  })
-);
+const app = fastify({ logger: true });
 
-app.get("/login", async (_, reply) => {
-  return reply.redirect(Oauth2);
+app.register(fastifyCookie, {
+  secret,
+  parseOptions: {
+    secure: true,
+    httpOnly: false,
+    maxAge: 6048e5,
+  },
+});
+
+app.get("/login", async (req, reply) => {
+  if (isAuthenticated(req)) return await reply.redirect(200, `${domain}/info`);
+
+  return await reply.redirect(Oauth2);
 });
 
 app.get("/logout", async (req, res) => {
-  if (!(req.session as any).token)
-    return res.status(401).send({ message: "Not Authorized" });
-  req.session.destroy(() => null);
-  return res.redirect(`${domain}/login`);
+  if (!isAuthenticated(req))
+    return await res.status(401).send({ message: "Not Authorized" });
+  await res.clearCookie("token");
+  return await res.redirect(`${domain}/login`);
 });
 
 app.get("/callback", async (req, reply) => {
   const { code } = req.query as any;
 
-  if (!code) return reply.status(404).send({ message: "No code provided." });
+  if (!code)
+    return await reply.status(404).send({ message: "No code provided." });
 
   try {
     const data = await axios.post(
@@ -51,24 +50,27 @@ app.get("/callback", async (req, reply) => {
       }
     );
 
-    (req.session as any).token = data.data.access_token;
-    return reply.status(200).redirect(`${domain}/info`);
+    await reply.setCookie("token", data.data.access_token);
+    return await reply.status(200).redirect(`${domain}/info`);
   } catch (e) {
-    reply.status(404);
     console.error(e);
+    return await reply.status(404).send({ message: "An error has occoured" });
   }
 });
 
 app.get("/info", async (req, res) => {
-  const token = (req.session as any).token as string;
-
-  if (!token) return res.status(401).send({ message: "Not Authorized" });
+  if (!isAuthenticated(req))
+    return await res.status(401).send({ message: "Not Authorized" });
 
   const data = await axios.get("https://discord.com/api/v10/users/@me", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${req.cookies.token}` },
   });
 
   return res.status(200).send(data.data);
 });
+
+function isAuthenticated(req: FastifyRequest) {
+  return req.cookies.token ? true : false;
+}
 
 app.listen(9012);
