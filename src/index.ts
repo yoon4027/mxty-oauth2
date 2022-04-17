@@ -34,6 +34,8 @@ app.get("/logout", async (req, res) => {
 app.get("/callback", async (req, reply) => {
   const { code } = req.query as any;
 
+  if (!code) return reply.status(404).send({ message: "No code provided." });
+
   try {
     const data = await axios.post(
       "https://discord.com/api/v10/oauth2/token",
