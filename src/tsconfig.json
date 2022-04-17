@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "#lib": ["lib/index.ts"],
+      "#lib/*": ["lib/*"],
+      "#lib/interfaces": ["lib/interfaces/*"],
+      "#lib/db": ["lib/interfaces/index.ts"],
+      "#root/*": ["*"]
+    },
+    "composite": true,
+    "outDir": "../build",
+    "rootDir": ".",
+    "baseUrl": "."
+  },
+  "include": ["."],
+  "exclude": ["./tsconfig.json", "../package.json"]
+}
