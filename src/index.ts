@@ -1,5 +1,5 @@
 import axios from "axios";
-import fastify, { FastifyRequest } from "fastify";
+import fastify, { FastifyReply, FastifyRequest } from "fastify";
 import fastifyCookie from "fastify-cookie";
 import { callback, client, Oauth2, secret } from "./config";
 
@@ -87,22 +87,12 @@ app.get("/info", async (req, reply) => {
   const data = await fetchUserData(req.cookies.token);
 
   if (!data) {
-    const { data: newData } = await axios.post(
-      `${apiURL}/oauth2/token`,
-      new URLSearchParams({
-        client_id: client.id,
-        client_secret: client.secret,
-        grant_type: "refresh_token",
-        refresh_token: req.cookies.refreshToken,
-      })
-    );
+    const data = await refreshToken(req, reply);
 
-    reply.setCookie("token", newData.access_token);
-    reply.setCookie("refreshToken", newData.refresh_token);
-
-    return reply.status(200).send(await fetchUserData(newData.access_token));
+    return reply.status(200).send(await fetchUserData(data.access_token));
   }
 
+  await refreshToken(req, reply);
   return reply.status(200).send(data!.data);
 });
 
@@ -116,6 +106,29 @@ async function fetchUserData(accessToken: string) {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     .catch(() => null);
+}
+
+async function refreshToken(req: FastifyRequest, reply: FastifyReply) {
+  const data = await axios
+    .post(
+      `${apiURL}/oauth2/token`,
+      new URLSearchParams({
+        client_id: client.id,
+        client_secret: client.secret,
+        grant_type: "refresh_token",
+        refresh_token: req.cookies.refreshToken,
+      })
+    )
+    .catch(() => null);
+
+  if (!data) return null;
+
+  const { data: newData } = data;
+
+  reply.setCookie("token", newData.access_token);
+  reply.setCookie("refreshToken", newData.refresh_token);
+
+  return newData;
 }
 
 app.listen(9012);
