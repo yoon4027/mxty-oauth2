@@ -112,7 +112,7 @@ function isAuthenticated(req: FastifyRequest): boolean {
 
 async function fetchUserData(accessToken: string) {
   return await axios
-    .get("https://discord.com/api/v10/users/@me", {
+    .get(`${apiURL}/users/@me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     .catch(() => null);
